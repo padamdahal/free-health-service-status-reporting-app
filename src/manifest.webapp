@@ -1,0 +1,23 @@
+{
+  "launch_path": "index.html",
+  "default_locale": "en",
+  "activities": {
+    "dhis": {
+      "href": "*"
+    }
+  },
+  "appType": "APP",
+  "name": "Free Health Portal",
+  "version": "1.0.0",
+  "description": "DHIS2 app for free health service reporting",
+  "developer": {
+    "name": "Padam",
+    "email": "padam.dahal@giz.de",
+    "url": "",
+    "company": ""
+  },
+  "icons": {
+    "48": "img/icon.png"
+  },
+  "manifest_generated_at": ""
+}

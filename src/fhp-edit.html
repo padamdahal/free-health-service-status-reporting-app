@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Free Health Portal</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link href="css/bootstrap.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/css/jquery.calendars.picker.css"> 
+	<link href="css/toastr.min.css" rel="stylesheet">
+	<style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            background-color: var(--bg-light);
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .header-label {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .required { color: red; }
+
+        .top-field {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+			font-size: 20px;
+			font-weight:bold;
+			padding: 20px 10px;
+			background: #efefef;
+			margin: 5px 0;
+        }
+
+        .form-row-header {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            font-size: 16px;
+            color: var(--primary-blue);
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            align-items: center;
+            padding: 10px 0;
+            /*border-bottom: 1px solid #ccc;*/
+        }
+
+        input, select {
+            width: 50%;
+            height: 40px;
+            padding: 5px 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 14px;
+			background: #fff !important;
+        }
+
+        .upload-group {
+            display: flex;
+            width: 100%;
+        }
+
+        .upload-group input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            background: #fdfdfd;
+        }
+
+        .upload-btn {
+            padding: 0 15px;
+            border: 1px solid var(--border-color);
+            border-left: none;
+            background: #d1d1d1;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .upload-btn:hover { background: #bcbcbc; }
+
+        .submit-container {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .btn-submit {
+            color: white;
+			padding: 15px 40px;
+			border: none;
+			border-radius: 4px;
+			font-size: 18px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background 0.3s;
+			margin-top: 10px;
+			width: 100%;
+			background: #337ab7;
+        }
+
+        .btn-submit:hover {
+            background-color: #2c4b63;
+        }
+
+        @media (max-width: 600px) {
+            .top-field, .form-row-header, .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-row-header div:last-child { display: none; }
+            .form-row { border-bottom: none; margin-bottom: 15px; }
+            .btn-submit { width: 100%; }
+        }
+		.row{padding:15px !important}
+		.form-row{border-bottom:1px solid #ccc;}
+    </style>
+	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/javascripts/jQuery/ui/css/redmond/jquery-ui.css" />
+	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/css/light_blue/light_blue.css">
+	<link type="text/css" rel="stylesheet" media="screen,print" href="../../../dhis-web-commons/css/widgets.css" />
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/underscore.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.util.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/periodType.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/date.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.plus.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.period.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.picker.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ss.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ls.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.idb.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.memory.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.js?_rev=19841"></script>
+	<script type="text/javascript" src="js/ouwt.js"></script>
+	
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.plugin.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.calendars.all.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.calendars.nepali.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/nepali.datepicker.v2.1.min.js"></script>
+	<script type="text/javascript" src="js/index.js"></script>
+  </head>
+
+  <body>
+    <div class="container-div">
+		<div class="row" style="background:#337ab7;color:#fff;padding:0 10px;">
+			<div class="col-md-9" style="padding-top:0">
+			<!--div style="float:left;margin-top:16px;">
+				<img src="img/icon.png" height="60"/>
+			</div-->
+			
+			<h3>Free Health Portal</h3>
+			</div>
+			<div class="col-md-3" style="padding-top:25px">
+				<a class="btn btn-success" href="/hmis" style="float:left;margin:0 3px 5px 0;">Home</a>
+				<!--a class="btn btn-success" id="helplink" href="https://www.notion.so/COVID-19-Vaccination-Monitoring-ae3620abc9164418871ac8f8fecfb101" target="_blank" style="float:left;margin:0 3px 5px 0;">Guidelines</a>
+				<a class="btn btn-info" id="reportLink" href="report.html" target="_blank" style="float:left;margin:0 3px 5px 0;">Report</a-->
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-3" style="">
+				<div class="sidebar" id="orgUnits">
+					<div>
+						<input id="searchField" type="text" placeholder="Search OrgUnit"/>
+					</div>
+					<div id="orgUnitTreeContainer">
+						<img id="ouwt_loader" src="../../../images/ajax-loader-bar.gif"/>
+						<div id="orgUnitTree" style="width:100%;height:530px;margin:10px 0">
+							<ul>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="col-md-9">
+				<div>
+					<h3 style="padding:10px;margin:0;background:#eee;font-size:18px;font-weight:bold">
+						Free Health Portal
+						<a href="index.html" style="font-size:16px;font-weight:bold;float:right">👁 View List</a>
+					</h3>
+					<div class="form-row">
+						<label>Hospital (select in the left panel)</label>
+						<input id="orgUnitName" type="text" readonly />
+						<input id="orgUnit" type="hidden" readonly />
+					</div>
+					<!--div class="form-row">
+						<label>Report </label>
+						<select id="reportType">
+							<option value="Tpxij9V1Rlo-f0C1TB9k2x6">Free Health Service Status</option>
+							<option value="jPXBKHN9ReP-g0d1go4MmzA">Hospital Information</option>
+						</select>
+					</div-->
+				</div>
+				<div id="form-container">
+					
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	const DHIS2_BASE_URL = "https://hmis.gov.np/hmisadditional";
+	const AUTH = "Basic YWRtaW46SG1pc0A5MDA5";
+	
+	var metadata;
+	var program;
+	var programStage;
+	var orgUnit;
+	const uploadedFiles = {};
+	
+	const queryString = window.location.search;
+	const params = new URLSearchParams(queryString);
+	const eventId = params.get('eventId');
+	
+	buildForm();
+	
+		
+	async function fetchMetadata(programStage) {
+		const url = `${DHIS2_BASE_URL}/api/programStages/${programStage}?fields=
+			id,name,programStageSections[id,name,sortOrder,dataElements[id]],
+			programStageDataElements[sortOrder,compulsory,displayInReports,dataElement[
+					id,name,shortName,formName,displayShortName,valueType,description,optionSet[id]]]`;
+		const res = await fetch(url, {
+			headers: { "Authorization": AUTH }
+		});
+		return await res.json();
+	}
+
+	async function fetchOptionSets(ids) {
+		if (!ids.length) return {};
+		const url = `${DHIS2_BASE_URL}/api/optionSets?filter=id:in:[${ids.join(",")}]&fields=id,options[code,name]`;
+		const res = await fetch(url, {
+			headers: { "Authorization": AUTH }
+		});
+		const data = await res.json();
+		let map = {};
+		data.optionSets.forEach(os => {
+			map[os.id] = os.options;
+		});
+		return map;
+	}
+
+	function getLabel(de) {
+		return de.formName || de.displayShortName || de.shortName || de.name;
+	}
+
+	function generateField(de,optionSets,compulsory,dataValue) {
+		const id = `${de.id}_field`;
+		var required = (compulsory)?'required':'';
+		var value;
+		
+		if(dataValue){
+			value = dataValue.value;
+		}else{
+			value = null;
+		}
+		if (de.optionSet) {
+			const options = optionSets[de.optionSet.id] || [];
+			let html = `<select id="${id}">
+							<option value="">Select</option>`;
+
+			options.forEach(opt => {
+				html += `<option value="${opt.code}" ${opt.code === value ? "selected" : ""}>${opt.name}</option>`;
+			});
+			html += `</select>`;
+			return html;
+		}
+		
+		switch (de.valueType) {
+			case "TEXT":
+			case "LONG_TEXT":
+				return `<input type="text" id="${id}" value="${value}" ${required}>`;
+			case "NUMBER":
+				return `<input type="number" id="${id}" value="${value}" ${required}>`;
+			case "INTEGER":
+				return `<input type="number" id="${id}" value="${value}" ${required}>`;
+			case "INTEGER_POSITIVE":
+				return `<input type="number" id="${id}" value="${value}" ${required}>`;
+			case "DATE":
+				return `<input type="date" id="${id}" value="${value}" ${required}>`;
+			case "TRUE_ONLY":
+				return `<input type="checkbox" id="${id}" ${value === 'true' ? "checked" : ""} ${required}>`;
+			case "PHONE_NUMBER":
+				return `<input type="tel" id="${id}" maxlength="10" pattern="[0-9]{10}" minlength="10" value="${value}" ${required}>`;
+			case "FILE_RESOURCE":
+				var html;
+				if(value != null){
+					const file = `${DHIS2_BASE_URL}/api/events/files?eventUid=${eventId}&dataElementUid=${de.id}`;
+					html = `<div><a id="${de.id}_currentDoc" href="${file}">View current document</a> <a href='#'>X</a></div>
+					<input type="hidden" id="${id}" value="${value}" ${required}>`
+				}else{
+					html = `<input type="file" id="${id}" ${required}>`;
+				}
+				return html;
+			default:
+				return `<input type="text" id="${id}" value="${value}" ${required}>`;
+		}
+	}
+
+	async function buildForm() {
+		const res = await fetch(
+			`${DHIS2_BASE_URL}/api/events/${eventId}.json`,
+			{ headers: { Authorization: AUTH } }
+		);
+		const eventData = await res.json();
+		
+		
+		program = eventData.program;
+		programStage = eventData.programStage;
+		orgUnit = eventData.orgUnit;
+		const dataValues = eventData.dataValues;
+		
+		const container = document.getElementById("form-container");
+		container.innerHTML = "";
+		
+		try {
+			metadata = await fetchMetadata(programStage);
+			let elements = metadata.programStageDataElements.sort(
+				(a, b) => a.sortOrder - b.sortOrder
+			);
+			// OptionSet IDs
+			const optionSetIds = elements
+				.map(e => e.dataElement.optionSet?.id)
+				.filter(Boolean);
+			const optionSets = await fetchOptionSets(optionSetIds);
+			let html = "";
+
+			// Render by Sections
+			if (metadata.programStageSections?.length) {
+				const sections = metadata.programStageSections.sort(
+					(a, b) => a.sortOrder - b.sortOrder
+				);
+
+				sections.forEach(section => {
+					html += `<div class="section-title">${section.name}</div>`;
+					section.dataElements.forEach(ref => {
+						const item = elements.find(e => e.dataElement.id === ref.id);
+						if (!item) return;
+						const de = item.dataElement;
+
+						const dataValue = dataValues.find(dv => dv.dataElement === de.id) || {};
+						if (!dataValue){
+							dataValue = null
+						}
+						const label = getLabel(de);
+
+						html += `<div class="form-row">`;
+						html += `<label title="${de.description || ""}">
+									${label}
+									${item.compulsory ? '<span class="required">*</span>' : ''}
+								 </label>`;
+						html += generateField(de,optionSets,item.compulsory,dataValue);
+						html += `</div>`;
+					});
+				});
+			}else{
+				// fallback if no sections
+				elements.forEach(item => {
+					const de = item.dataElement;
+					const label = getLabel(de);
+					const dataValue = dataValues.find(dv => dv.dataElement === de) || {};
+					if (!dataValue){
+						dataValue = null
+					}
+					html += `<div class="form-row">`;
+					html += `<label>
+								${label}
+								${item.compulsory ? '<span class="required">*</span>' : ''}
+							 </label>`;
+					html += generateField(de,optionSets,item.compulsory,dataValue);
+					html += `</div>`;
+				});
+			}
+			html += `<button class="btn-submit" onclick="submitEvent()">Submit</button>`;
+			container.innerHTML = html;
+			attachFileListeners();
+		} catch (err) {
+			console.error(err);
+			container.innerHTML = "Failed to load form";
+		}
+	}
+
+	async function uploadFileToDHIS2(file) {
+		const formData = new FormData();
+		formData.append("file", file);
+		const res = await fetch(`${DHIS2_BASE_URL}/api/fileResources`, {
+			method: "POST",
+			headers: {
+				"Authorization": AUTH
+			},
+			body: formData
+		});
+
+		const result = await res.json();
+		if (!res.ok) {
+			console.error("File upload failed:", result);
+			throw new Error("File upload failed");
+		}
+		return result.response.fileResource.id;
+	}
+
+	async function submitEvent() {
+
+		if (!validateForm(metadata)) {
+			submitBtn.disabled = false;
+			return;
+		}
+		var eventStatus = 'ACTIVE';
+		
+		const elements = metadata.programStageDataElements;
+		let dataValues = [];
+		
+		elements.forEach(item => {
+			const de = item.dataElement;
+			const el = document.getElementById(`${de.id}_field`);
+			if (!el) return;
+			let value = '';
+			
+			if (el.type === "checkbox") {
+				if (el.checked) {
+					value = 'true';
+					if(de.id === "DsZjWisWVZn"){
+						eventStatus = "COMPLETED";
+					}
+				}
+			}else if(el.type === 'file'){
+				const fileId = uploadedFiles[de.id];
+				if (fileId) {
+					value = fileId
+				}
+			}else{
+				value = el.value;
+			}
+			
+			if (value !== "") {
+				dataValues.push({
+					dataElement: de.id,
+					value: value
+				});
+			}
+		});
+		
+		const payload = {
+			event: eventId,
+			program: program,
+			programStage: programStage,
+			orgUnit: orgUnit,
+			status: eventStatus,
+			dataValues: dataValues
+		};
+	
+		try {
+			const res = await fetch(`${DHIS2_BASE_URL}/api/events/${eventId}`, {
+				method: "PUT",
+				headers: {
+					"Authorization": AUTH,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(payload)
+			});
+
+			const result = await res.json();
+
+			if (res.ok) {
+				alert("Event submitted successfully");
+				redirectToListView(program+"-"+programStage);
+			} else {
+				console.error(result);
+				alert("Submission failed");
+			}
+
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+		// Select organization unit
+	var selectedOrgUnit;
+	selection.setListenerFunction(function(e){
+		selectedOrgUnit = e;
+		var selectedOrgUnitName = document.getElementsByClassName("selected")[0].innerHTML;
+		document.getElementById('orgUnitName').value = selectedOrgUnitName;
+		document.getElementById('orgUnit').value = e[0];
+		$("#orgUnit").trigger("change");
+	});
+		
+	// Organization Unit search
+	$("#searchField").autocomplete({
+		source: "../../../dhis-web-commons/ouwt/getOrganisationUnitsByName.action",
+		select: function(event,ui) {
+			$("#searchField").val(ui.item.value);
+			selection.findByName();
+		}
+	});
+
+	function attachFileListeners() {
+		const fileInputs = document.querySelectorAll('input[type="file"]');
+		fileInputs.forEach(input => {
+			input.addEventListener("change", async function() {
+				if (!this.files.length) return;
+				const file = this.files[0];
+				const dataElement = this.id.split("_")[0];
+				// UI feedback
+				this.disabled = true;
+				try {
+					const fileId = await uploadFileToDHIS2(file);
+					// Store fileResourceId
+					uploadedFiles[dataElement] = fileId;
+					// Optional UI feedback
+					this.style.border = "2px solid green";
+					this.title = "Uploaded";
+					console.log("Uploaded:", dataElement, fileId);
+				} catch (err) {
+					alert("File upload failed");
+					this.value = "";
+				}
+				this.disabled = false;
+			});
+		});
+	}
+
+	function validateForm(metadata) {
+		const elements = metadata.programStageDataElements;
+		
+		for (let item of elements) {
+			if (!item.compulsory) continue;
+			const de = item.dataElement;
+			const el = document.getElementById(`${de.id}_field`);
+			if (!el) continue;
+			
+			let isValid = true;
+
+			if(el.type === "file") {
+				if (!uploadedFiles[de.id]) {
+					isValid = false;
+				}
+			}else if (el.type === "checkbox") {
+				if (!el.checked) {
+					isValid = false;
+				}
+			}else if (el.type === "tel") {
+				if (el.value.length !== 10) {
+					alert('Phone number must be exactly 10 digits');
+					isValid = false;
+				}
+			}else {
+				if (!el.value || el.value.trim() === "") {
+					isValid = false;
+				}
+			}
+
+			if (!isValid) {
+				const label = getLabel(de);
+				alert(label + " is required");
+				el.focus();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	function redirectToListView(program) {
+		window.location.href = "index.html?program="+program;
+	}
+</script>
+</html>

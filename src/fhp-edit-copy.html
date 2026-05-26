@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Free Health Service Status</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link href="css/bootstrap.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/css/jquery.calendars.picker.css"> 
+	<link href="css/toastr.min.css" rel="stylesheet">
+	<style>
+		body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            background-color: var(--bg-light);
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .header-label {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .required { color: red; }
+
+        .top-field {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+			font-size: 20px;
+			font-weight:bold;
+			padding: 20px 10px;
+			background: #efefef;
+			margin: 5px 0;
+        }
+
+        .form-row-header {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            font-size: 16px;
+            color: var(--primary-blue);
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            align-items: center;
+            padding: 10px 0;
+            /*border-bottom: 1px solid #ccc;*/
+        }
+
+        input, select {
+            width: 50%;
+            height: 40px;
+            padding: 5px 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 14px;
+			background: #fff !important;
+        }
+
+        .upload-group {
+            display: flex;
+            width: 100%;
+        }
+
+        .upload-group input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            background: #fdfdfd;
+        }
+
+        .upload-btn {
+            padding: 0 15px;
+            border: 1px solid var(--border-color);
+            border-left: none;
+            background: #d1d1d1;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .upload-btn:hover { background: #bcbcbc; }
+
+        .submit-container {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .btn-submit {
+            color: white;
+			padding: 15px 40px;
+			border: none;
+			border-radius: 4px;
+			font-size: 18px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background 0.3s;
+			margin-top: 10px;
+			width: 100%;
+			background: #337ab7;
+        }
+
+        .btn-submit:hover {
+            background-color: #2c4b63;
+        }
+
+        @media (max-width: 600px) {
+            .top-field, .form-row-header, .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-row-header div:last-child { display: none; }
+            .form-row { border-bottom: none; margin-bottom: 15px; }
+            .btn-submit { width: 100%; }
+        }
+		.row{padding:15px !important}
+		.form-row{border-bottom:1px solid #ccc;}
+		body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f5f7fa;
+}
+
+a {
+    display: inline-block;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: #2c4b63;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-size: 14px;
+}
+
+th {
+    background: #3e688a;
+    color: #fff;
+}
+
+button {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+		/* Modal */
+		.modal {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0.4);
+		}
+
+		.modal-content {
+			background: #fff;
+			width: 400px;
+			margin: 80px auto;
+			padding: 20px;
+			border-radius: 8px;
+		}
+
+		.form-row {
+			margin-bottom: 10px;
+		}
+
+		label {
+			display: block;
+			margin-bottom: 5px;
+		}
+		</style>
+	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/javascripts/jQuery/ui/css/redmond/jquery-ui.css" />
+	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/css/light_blue/light_blue.css">
+	<link type="text/css" rel="stylesheet" media="screen,print" href="../../../dhis-web-commons/css/widgets.css" />
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/underscore.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.util.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/periodType.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/date.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.plus.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.period.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.picker.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ss.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ls.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.idb.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.memory.js?_rev=19841"></script>
+	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.js?_rev=19841"></script>
+	<script type="text/javascript" src="js/ouwt.js"></script>
+	
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.plugin.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.calendars.all.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.calendars.nepali.js"></script>
+	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/nepali.datepicker.v2.1.min.js"></script>
+	<!--script type="text/javascript" src="js/index.js"></script-->
+  </head>
+
+  <body>
+    <div class="container-div">
+		<div class="row" style="background:#337ab7;color:#fff;padding:0 10px;">
+			<div class="col-md-9" style="padding-top:0">
+			<!--div style="float:left;margin-top:16px;">
+				<img src="img/icon.png" height="60"/>
+			</div-->
+			<h3>Reporting of Free Health Service Status</h3>
+			</div>
+			<div class="col-md-3" style="padding-top:25px">
+				<a class="btn btn-success" href="/hmis" style="float:left;margin:0 3px 5px 0;">Home</a>
+				<a class="btn btn-success" id="helplink" href="https://www.notion.so/COVID-19-Vaccination-Monitoring-ae3620abc9164418871ac8f8fecfb101" target="_blank" style="float:left;margin:0 3px 5px 0;">Guidelines</a>
+				<a class="btn btn-info" id="reportLink" href="report.html" target="_blank" style="float:left;margin:0 3px 5px 0;">Report</a>
+			</div>
+		</div>
+		<div class="row" style="padding:20px;">
+			<div class="col-md-3" style="">
+				<div class="sidebar" id="orgUnits">
+					<div>
+						<input id="searchField" type="text" placeholder="Search OrgUnit"/>
+					</div>
+					<div id="orgUnitTreeContainer">
+						<img id="ouwt_loader" src="../../../images/ajax-loader-bar.gif"/>
+						<div id="orgUnitTree" style="width:100%;height:530px;margin:10px 0">
+							<ul>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="col-md-9">
+				<div>
+					<h3 style="padding:10px;margin:0;background:#eee;font-size:18px;font-weight:bold">
+						Free Health Services Reporting
+						<a id="addNew" href="index_new.html" style="font-size:16px;font-weight:bold;float:right">➕ New Entry</a>
+					</h3>
+					<div class="form-row">
+						<label>Hospital (select in the left panel)</label>
+						<input id="orgUnitName" type="text" readonly />
+						<input id="orgUnit" type="hidden" readonly />
+					</div>
+					<div class="form-row">
+						<label>Report</label>
+						<select id="reportType">
+							<option value="Tpxij9V1Rlo-f0C1TB9k2x6">Free Health Service Status</option>
+							<option value="jPXBKHN9ReP-g0d1go4MmzA">Hospital Information</option>
+						</select>
+					</div>
+				</div>
+				<div id="event-list"><img src='img/pulse.gif'/></div>
+
+				<!-- Modal -->
+				<div id="modal" class="modal">
+					<div class="modal-content">
+						<h3>Update Event</h3>
+						<div id="edit-form"></div>
+						<div id="hiddenDataValues"></div>
+						<button onclick="submitUpdate()">Save</button>
+						<button onclick="closeModal()">Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	const DHIS2_BASE_URL = "https://hmis.gov.np/hmisadditional";
+	const AUTH = "Basic YWRtaW46SG1pc0A5MDA5";
+
+	var metadata;
+	const uploadedFiles = {};
+	var reportElements;
+
+	// Select organization unit
+	var selectedOrgUnit;
+	selection.setListenerFunction(function(e){
+		selectedOrgUnit = e;
+		var selectedOrgUnitName = document.getElementsByClassName("selected")[0].innerHTML;
+		document.getElementById('orgUnitName').value = selectedOrgUnitName;
+		document.getElementById('orgUnit').value = e[0];
+		loadEvents();
+	});
+	
+	// Organization Unit search
+	$("#searchField").autocomplete({
+		source: "../../../dhis-web-commons/ouwt/getOrganisationUnitsByName.action",
+		select: function(event,ui) {
+			$("#searchField").val(ui.item.value);
+			selection.findByName();
+		}
+	});
+
+	let currentEventId = null;
+
+	function getLabel(de) {
+		return de.formName || de.displayShortName || de.shortName || de.name;
+	}
+
+	async function fetchMetadata(programStage) {
+		const url = `${DHIS2_BASE_URL}/api/programStages/${programStage}?fields=
+			programStageDataElements[displayInReports,compulsory,dataElement[
+					id,name,formName,shortName,displayShortName,valueType]]`;
+		const res = await fetch(url, { headers: { Authorization: AUTH } });
+		return await res.json();
+	}
+
+	async function loadEvents() {
+		const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+		metadata = await fetchMetadata(PROGRAM_STAGE);
+		const elements = metadata.programStageDataElements;
+		const ORG_UNIT_ID = document.getElementById('orgUnit').value;
+		reportElements = elements.filter(e => e.displayInReports);
+
+		const res = await fetch(
+			`${DHIS2_BASE_URL}/api/events.json?programStage=${PROGRAM_STAGE}&orgUnit=${ORG_UNIT_ID}&paging=false&fields=event,eventDate,dataValues[dataElement,value]`,
+			{ headers: { Authorization: AUTH } }
+		);
+
+		const data = await res.json();
+		let html = `<table>
+			<tr>
+				<th>Date</th>`;
+		reportElements.forEach(e => {
+			html += `<th>${getLabel(e.dataElement)}</th>`;
+		});
+
+		html += `<th>Action</th></tr>`;
+		if(data.events.length > 0){
+			data.events.forEach(ev => {
+				html += `<tr><td>${ev.eventDate}</td>`;
+				reportElements.forEach(e => {
+					const dv = ev.dataValues.find(d => d.dataElement === e.dataElement.id);
+					html += `<td>${dv ? dv.value : ""}</td>`;
+				});
+				html += `<td><button onclick="openEditModal('${ev.event}')">Update</button></td></tr>`;
+			});
+		}
+		html += `</table>`;
+		document.getElementById("event-list").innerHTML = html;
+		
+		// Hide add new button for one time information
+		//console.log(data.events);
+		if(data.events.length != 0 && PROGRAM_STAGE == 'g0d1go4MmzA'){
+			document.getElementById("addNew").style.display = "none";
+		}
+	}
+	
+async function fetchOptionSets(ids) {
+    if (!ids.length) return {};
+    const url = `${DHIS2_BASE_URL}/api/optionSets?filter=id:in:[${ids.join(",")}]&fields=id,options[code,name]`;
+    const res = await fetch(url, {
+        headers: { "Authorization": AUTH }
+    });
+    const data = await res.json();
+    let map = {};
+    data.optionSets.forEach(os => {
+        map[os.id] = os.options;
+    });
+    return map;
+}
+
+async function openEditModal(eventId) {
+	currentEventId = eventId;
+    const res = await fetch(`${DHIS2_BASE_URL}/api/events/${eventId}?fields=*`, {
+        headers: { Authorization: AUTH }
+    });
+    const event = await res.json();
+	const hiddenContainer = document.getElementById('hiddenDataValues');
+	hiddenContainer.innerHTML = '';
+	
+	event.dataValues.forEach(dv => {
+		const input = document.createElement('input');
+		input.type = 'hidden';
+		input.id = `${dv.dataElement}_edit`;
+		input.value = dv.value || '';
+		hiddenContainer.appendChild(input);
+	});
+	
+	//const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+    //const metadata = await fetchMetadata(PROGRAM_STAGE);
+	// OptionSet IDs
+	console.log(metadata);
+    const optionSetIds = metadata.programStageDataElements
+		.map(e => e.dataElement.optionSet?.id)
+        .filter(Boolean);
+    const optionSets = await fetchOptionSets(optionSetIds);
+	
+    let html = "";
+    metadata.programStageDataElements.forEach(item => {
+        const de = item.dataElement;
+        const isEditable =
+            de.id === "DsZjWisWVZn"||de.id === "oBhJ0aWNjmL"||de.id === "kbk674mg4Rh"||de.id === "VSd3BxrDuBF"||
+			de.id === "cUUVaXo21gY"||de.id === "KlWa60ykfy8"||de.id === "KlWa60ykfy8"||de.id === "qVRMckbEOgO"||
+			de.id === "QAswrx1oTdQ"||de.id === "nbUV3lqRHmu";
+
+        //if (!isEditable) return;
+		
+		console.log(reportElements);
+		
+		elementInfo = reportElements.find(el => el.dataElement.id == de.id) || "";
+		console.log(elementInfo);
+		if(elementInfo.displayInReports == true){
+			const label = getLabel(de);
+			const id = `${de.id}_edit`;
+			const required = (elementInfo.compulsory)?'required':'';
+			
+			const existing = event.dataValues.find(d => d.dataElement === de.id);
+			html += `<div class="form-row">
+						<label>${label}</label>`;
+			if (de.optionSet) {
+				const options = optionSets[de.optionSet.id] || [];
+				let html = `<select id="${id}">
+								<option value="">Select</option>`;
+
+				options.forEach(opt => {
+					html += `<option value="${opt.code}" ${opt.code === existing.value ? "selected" : ""}>${opt.name}</option>`;
+				});
+				html += `</select>`;
+			}
+			
+			switch (de.valueType) {
+				case "TEXT":
+				case "LONG_TEXT":
+					html += `<input type="text" id="${id}" value="${existing ? existing.value : ""}">`;
+				case "NUMBER":
+					html += `<input type="number" id="${id}" value="${existing ? existing.value : ""}">`;
+				case "INTEGER":
+					html += `<input type="number" id="${id}" value="${existing ? existing.value : ""}">`;
+				case "DATE":
+					html += `<input type="date" id="${id}" value="${existing ? existing.value : ""}">`;
+				case "TRUE_ONLY":
+					html += `<input type="checkbox" id="${id}" ${existing ? "checked" : ""}>`;
+				case "PHONE_NUMBER":
+					html += `<input type="tel" id="${id}" value="${existing ? existing.value : ""}">`;
+				default:
+					html += `<input type="text" id="${id}" value="${existing ? existing.value : ""}">`;
+			}
+			
+			/*
+			if (de.valueType === "TRUE_ONLY") {
+				html += `<input type="checkbox" id="${id}" ${existing ? "checked" : ""}>`;
+			}else if (de.valueType === "DATE") {
+				html += `<input type="date" id="${id}" value="${existing ? existing.value : ""}">`;
+			}*/
+			
+			html += `</div>`;
+		}else{
+			var dv = event.dataValues.find(e => d.dataElement === de.id);
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.id = `${dv.dataElement}_edit`;
+				input.value = dv.value || '';
+				hiddenContainer.appendChild(input);
+			//});
+		
+		}
+    });
+
+    document.getElementById("edit-form").innerHTML = html;
+    document.getElementById("modal").style.display = "block";
+}
+
+function generateField(de, optionSets, compulsory) {
+    const id = `${de.id}_field`;
+	const required = (compulsory)?'required':'';
+    if (de.optionSet) {
+        const options = optionSets[de.optionSet.id] || [];
+        let html = `<select id="${id}">
+                        <option value="">Select</option>`;
+
+        options.forEach(opt => {
+            html += `<option value="${opt.code}">${opt.name}</option>`;
+        });
+        html += `</select>`;
+        return html;
+    }
+	
+    switch (de.valueType) {
+        case "TEXT":
+        case "LONG_TEXT":
+            return `<input type="text" id="${id}" ${required}>`;
+        case "NUMBER":
+			return `<input type="number" id="${id}" ${required}>`;
+        case "INTEGER":
+            return `<input type="number" id="${id}" ${required}>`;
+        case "DATE":
+            return `<input type="date" id="${id}" ${required}>`;
+        case "TRUE_ONLY":
+            return `<input type="checkbox" id="${id}" ${required}>`;
+        case "PHONE_NUMBER":
+            return `<input type="tel" id="${id}" ${required}>`;
+		case "FILE_RESOURCE":
+            return `<input type="file" id="${id}" ${required}>`;
+        default:
+            return `<input type="text" id="${id}" ${required}>`;
+    }
+}
+
+/*async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${DHIS2_BASE_URL}/api/fileResources`, {
+        method: "POST",
+        headers: { Authorization: AUTH },
+        body: formData
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error("Upload failed");
+    return result.response.fileResource.id;
+}*/
+
+async function submitUpdate() {
+	const ORG_UNIT = document.getElementById('orgUnit').value;
+	const PROGRAM = document.getElementById("reportType").value.split("-")[0];
+	const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+    const metadata = await fetchMetadata(PROGRAM_STAGE);
+    let dataValues = [];
+	
+    for (let item of metadata.programStageDataElements) {
+        const de = item.dataElement;
+        const el = document.getElementById(`${de.id}_edit`);
+        if (!el) continue;
+
+        if (el.type === "file" && el.files.length) {
+            const fileId = await uploadFile(el.files[0]);
+            dataValues.push({
+                dataElement: de.id,
+                value: fileId
+            });
+        }else if (el.type === "checkbox") {
+            if (el.checked) {
+                dataValues.push({
+                    dataElement: de.id,
+                    value: "true"
+                });
+            }
+        }else if (el.value) {
+            dataValues.push({
+                dataElement: de.id,
+                value: el.value
+            });
+        }
+    }
+    const payload = {
+        event: currentEventId,
+        program: PROGRAM,
+        programStage: PROGRAM_STAGE,
+        orgUnit: ORG_UNIT,
+        status: "COMPLETED",
+        dataValues: dataValues
+    };
+	
+    const res = await fetch(`${DHIS2_BASE_URL}/api/events/${currentEventId}`, {
+        method: "PUT",
+        headers: {
+            Authorization: AUTH,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        alert("Updated successfully");
+        closeModal();
+        loadEvents();
+    } else {
+        alert("Update failed");
+    }
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+const selectElement = document.querySelector('#reportType');
+selectElement.addEventListener('change', (event) => {
+	document.getElementById("event-list").innerHTML = "<img src='img/pulse.gif'/>";
+	document.getElementById("addNew").style.display = "block";
+	loadEvents();
+});
+
+loadEvents();
+
+</script>
+</html>
