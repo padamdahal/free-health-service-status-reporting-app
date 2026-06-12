@@ -431,7 +431,7 @@ async function submitEvent() {
         events: [{
             program: program,
             programStage: programStage,
-            orgUnit: document.getElementById('orgUnit').value,
+            orgUnit: selectedOrgUnit, //document.getElementById('orgUnit').value,
             eventDate: new Date().toISOString().split("T")[0],
             status: eventStatus,
             dataValues: dataValues
@@ -473,7 +473,7 @@ selection.setListenerFunction(function(e){
 	document.getElementById('orgUnitName').value = selectedOrgUnitName;
 	document.getElementById('orgUnit').value = e[0];
 	$("#orgUnit").trigger("change");
-    checkOuId(e[0],ouName)
+    checkOuId(e[0],selectedOrgUnitName);
 });
 	
 // Organization Unit search
