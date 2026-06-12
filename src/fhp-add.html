@@ -134,22 +134,22 @@
 		.row{padding:15px !important}
 		.form-row{border-bottom:1px solid #ccc;}
     </style>
-	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/javascripts/jQuery/ui/css/redmond/jquery-ui.css" />
-	<link type="text/css" rel="stylesheet" media="screen" href="../../../dhis-web-commons/css/light_blue/light_blue.css">
-	<link type="text/css" rel="stylesheet" media="screen,print" href="../../../dhis-web-commons/css/widgets.css" />
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/underscore.min.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.util.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/periodType.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/date.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.min.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.plus.min.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.period.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.picker.min.js?_rev=080a9f7"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ss.js?_rev=19841"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.ls.js?_rev=19841"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.idb.js?_rev=19841"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.memory.js?_rev=19841"></script>
-	<script type="text/javascript" src="../../../dhis-web-commons/javascripts/dhis2/dhis2.storage.js?_rev=19841"></script>
+	<link type="text/css" rel="stylesheet" media="screen" href="/dhis-web-commons/javascripts/jQuery/ui/css/redmond/jquery-ui.css" />
+	<link type="text/css" rel="stylesheet" media="screen" href="/dhis-web-commons/css/light_blue/light_blue.css">
+	<link type="text/css" rel="stylesheet" media="screen,print" href="/dhis-web-commons/css/widgets.css" />
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/underscore.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.util.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/periodType.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/date.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.plus.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.period.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/jQuery/calendars/jquery.calendars.picker.min.js?_rev=080a9f7"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.storage.ss.js?_rev=19841"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.storage.ls.js?_rev=19841"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.storage.idb.js?_rev=19841"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.storage.memory.js?_rev=19841"></script>
+	<script type="text/javascript" src="/dhis-web-commons/javascripts/dhis2/dhis2.storage.js?_rev=19841"></script>
 	<script type="text/javascript" src="js/ouwt.js"></script>
 	
 	<script type="text/javascript" src="https://padamdahal.github.io/EWARS_DHIS2/ewars-dhis-assets/jquery.calendars.package-2.1.0/js/jquery.plugin.js"></script>
@@ -182,7 +182,7 @@
 						<input id="searchField" type="text" placeholder="Search OrgUnit"/>
 					</div>
 					<div id="orgUnitTreeContainer">
-						<img id="ouwt_loader" src="../../../images/ajax-loader-bar.gif"/>
+						<img id="ouwt_loader" src="/images/ajax-loader-bar.gif"/>
 						<div id="orgUnitTree" style="width:100%;height:530px;margin:10px 0">
 							<ul>
 							</ul>
@@ -232,9 +232,8 @@ async function fetchMetadata() {
 	const program = programInfo.split("-")[0];
 	const programStage = programInfo.split("-")[1];
     const url = `${DHIS2_BASE_URL}/api/programStages/${programStage}?fields=
-        id,name,programStageSections[id,name,sortOrder,dataElements[id]],
-        programStageDataElements[sortOrder,compulsory,displayInReports,dataElement[
-                id,name,shortName,formName,displayShortName,valueType,description,optionSet[id]]]`;
+id,name,programStageSections[id,name,sortOrder,dataElements[id]],
+programStageDataElements[sortOrder,compulsory,displayInReports,dataElement[        id,name,shortName,formName,displayShortName,valueType,description,optionSet[id]]]`;
     const res = await fetch(url, {
         headers: { "Authorization": AUTH }
     });
@@ -474,16 +473,49 @@ selection.setListenerFunction(function(e){
 	document.getElementById('orgUnitName').value = selectedOrgUnitName;
 	document.getElementById('orgUnit').value = e[0];
 	$("#orgUnit").trigger("change");
+    checkOuId(e[0],ouName)
 });
 	
 // Organization Unit search
 $("#searchField").autocomplete({
-	source: "../../../dhis-web-commons/ouwt/getOrganisationUnitsByName.action",
+	source: "/dhis-web-commons/ouwt/getOrganisationUnitsByName.action",
 	select: function(event,ui) {
 		$("#searchField").val(ui.item.value);
 		selection.findByName();
 	}
 });
+
+async function checkOuId(ouId,ouName){
+    // try to get the details from another instance firstChild
+    let ouIdToReturn;
+    var url = `${DHIS2_BASE_URL}/api/organisationUnits/${ouId}?fields=id,name,level`;
+    const res = await fetch(url, {
+        headers: { "Authorization": AUTH }
+    });
+    const data = await res.json();
+    if(data.status === undefined){
+        console.log("OU ID Match");
+        ouIdToReturn = ouId;
+    }else{
+      // Check OU By Name
+      var url = `${DHIS2_BASE_URL}/api/organisationUnits?filter=name:like:${ouName}&paging=false`;
+      const res = await fetch(url, {
+        headers: { "Authorization": AUTH }
+      });
+      const data = await res.json();
+        if(data.organisationUnits != undefined){
+            console.log('OU name match');
+            console.log(data.organisationUnits[0].id);
+            ouIdToReturn = data.organisationUnits[0].id;
+            selectedOrgUnit = ouIdToReturn;
+        }else{
+            alert("Hospital doesn't exists in target system.")
+            selectedOrgUnit = null;
+        }
+    }
+    console.log("Remote orgUnitId = "+ouIdToReturn);
+    
+}
 
 function attachFileListeners() {
     const fileInputs = document.querySelectorAll('input[type="file"]');

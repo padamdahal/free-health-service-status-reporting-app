@@ -15,7 +15,7 @@
  * selection.setMultipleSelectionAllowed function to change this.
  */
 
-var dhis2BaseUrl = "../../.."; //"http://hmis.gov.np/hmisadditional"; //
+var dhis2BaseUrl = ""; //"http://hmis.gov.np/hmisadditional"; //
 var organisationUnitTreePath = dhis2BaseUrl + "/dhis-web-commons/ouwt/";
 var organisationUnits = {};
 
