@@ -1,356 +1,386 @@
-// Get the app manifest in order to determine the location of the API
-$.getJSON('manifest.webapp').done(manifest => {
-    console.info('Loading app resources');
-	
-	// Date fields
-	var dateFields = ["BV7czmy3DvI-HllvX50cXC0-val", "oNDcK12zz0e-HllvX50cXC0-val"];
-	$("#form").hide();
 
-	$("#loading").hide();
-	$(".submitandmessage").hide();
-	
-	dhis2.period.format = 'yyyy-mm-dd';
-    dhis2.period.calendar = $.calendars.instance('gregorian');
-    dhis2.period.generator = new dhis2.period.PeriodGenerator( dhis2.period.calendar, dhis2.period.format );
-	dhis2.period.picker = new dhis2.period.DatePicker( dhis2.period.calendar, dhis2.period.format );
-	
-	// Get the server date
-	var serverDate;
-	$.getJSON('../../../api/system/info').done(systemInfo => {
-		console.log('Server Date: '+systemInfo.serverDate.substring(0, 10));
-		serverDate = systemInfo.serverDate.substring(0, 10);
-	});
-	
-	// Set the maximum selectable date
-	var maxDate = new Date(dhis2.period.picker.defaults.maxDate.toString());
-	maxDate.setDate(maxDate.getDate());
-	//$("#reportDate").attr('max',maxDate.toISOString().substring(0,10));
-	
-	// Set the minimum selectable date
-	var minDate = new Date(dhis2.period.picker.defaults.maxDate.toString());
-	minDate.setDate(minDate.getDate()-1);
-	//$("#reportDate").attr('min',minDate.toISOString().substring(0,10));
-	
-	$("#reportDateNp").calendarsPicker({
-		calendar: $.calendars.instance('nepali'),
-		minDate: "",
-		maxDate: "0d",
-		yearRange: '-120:+0',
-		duration: "fast",
-	    showAnim: "fadeIn",
-		dateFormat: 'yyyy-mm-dd',
-		onSelect: function(npDate) {
-			var engDate = BS2AD(npDate[0]._year+'-'+npDate[0]._month+'-'+npDate[0]._day);
-			$("#reportDate").val(engDate);
-			$("#reportDate").trigger("change");
-			$('.ui-datepicker-cmd-close').trigger("click");
-		}
-	});
-	
-	$("#orgUnit").change(function(){
-		$("#loading").hide();
-		$("#statusmessage").hide();
-		$(".submitandmessage").hide();
-		$("#form").hide();
-		
-		var ouId = $("#orgUnit").val();
-		checkOuId(ouId,$("#orgUnitName").val());
-	});
-	
-	$("#reportDate").change(function(){
-		var pe = getPeriod();
-		var ouId = $("#orgUnit").val();
-		
-		var dataSet = $("#dataset").val();
-		$(".submitandmessage").hide();
-		if($("#dataset").val() != "" && $("#orgUnit").val() != ""){
-			displayForm(pe, ouId, dataSet);
-		}
-	});
-	
-	$("#dataset").change(function(){
-		var dataSet = $(this).val();
-		var ouId = $("#orgUnit").val();
-		
-		if($("#reportDate").val() != "" && $("#reportDate").val() != 'undefined'){
-			var pe = getPeriod();
-			displayForm(pe, ouId, dataSet);
-		}
-	});
-	
-	$(document).on("blur", ".form input", function(){
-				
-		var inputId = $(this).attr("id");
-		var value = $(this).val();
-		var de = inputId.split('-')[0];
-		var co = inputId.split('-')[1];
-		var ds = $("#dataset").val();
-		var ou = $("#orgUnit").val();
-		var pe = getPeriod();
-		
-		var dataValuesUrl = "/hmisrest/restservice.php?action=dataValues&type=plain";
-		var formData = "de="+de+"&co="+co+"&ds="+ds+"&ou="+ou+"&pe="+pe+"&value="+value;
-		$.ajax({
-			type: "POST",
-			url: dataValuesUrl,
-			data: formData,
-			dataType: 'json',
-			beforeSend: function( xhr ) {
-				$("#"+inputId).css('background','yellow');
-			}, success: function(data){
-				$("#loading").hide();
-				if(data == null || data.status != 'ERROR'){
-					$("#"+inputId).css('background','rgb(185, 255, 185)');
-				}else{
-					$("#"+inputId).css('background','yellow');
-					//console.log(data.message);
-					toastr.error(data.message +". Please read the note.",'ERROR');
-				}
-			}, failure: function(errMsg) {
-				//console.log(errMsg);
-				toastr.info(errMsg);
-				$("#"+inputId).css('background','orange');
-				$("#statusmessage").html('<span style="color:red;font-wieght:bold">');
-				$("#statusmessage").show();
-				$("#loading").hide();
-			}
+	const DHIS2_BASE_URL = "https://hmis.gov.np/hmisadditional";
+	const AUTH = "Basic YWRtaW46SG1pc0A5MDA5";
+	var selectedEvent;
+
+	const queryString = window.location.search;
+	const params = new URLSearchParams(queryString);
+	const programInfo = params.get('program');
+	const reportType = document.querySelector('#reportType');
+
+	if(programInfo){
+		reportType.value = programInfo; 
+	}
+
+	async function fetchMetadata(programStage) {
+		const url = `${DHIS2_BASE_URL}/api/programStages/${programStage}?fields=
+			programStageDataElements[displayInReports,compulsory,dataElement[
+					id,name,formName,shortName,displayShortName,valueType]]`;
+		const res = await fetch(url, { headers: { Authorization: AUTH } });
+		return await res.json();
+	}
+
+	function getLabel(de) {
+		return de.formName || de.displayShortName || de.shortName || de.name;
+	}
+
+	async function loadEvents() {
+		const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+		let ORG_UNIT = document.getElementById('orgUnit').value;
+		ORG_UNIT = await checkOuId(ORG_UNIT, document.getElementById('orgUnitName').value);
+		console.log
+		const metadata = await fetchMetadata(PROGRAM_STAGE);
+		const elements = metadata.programStageDataElements;
+		const reportElements = elements.filter(e => e.displayInReports);
+
+		const res = await fetch(
+			`${DHIS2_BASE_URL}/api/events.json?programStage=${PROGRAM_STAGE}&orgUnit=${ORG_UNIT}&paging=false&fields=event,eventDate,dataValues[dataElement,value]`,
+			{ headers: { Authorization: AUTH } }
+		);
+
+		const data = await res.json();
+		let html = `<table id="dataTable">
+			<tr>
+				<th>Date</th>`;
+		reportElements.forEach(e => {
+			html += `<th>${getLabel(e.dataElement)}</th>`;
 		});
-	});
-	
-	$(document).on("click", "#complete", function(){
-		var reportDate = $("#reportDate").val();
-		var hf = $("#orgUnit").val();
-		
-		$.getJSON("https://raw.githubusercontent.com/padamdahal/HMIS-App/master/validation.json", function(validations) {
-			var failedValidaitons = {};
-			validations = validations[$("#dataset").val()];
-			$.each(validations, function(key, validation){
-				
-				var expressionCompare = {
-					'==': function(a, b) { return a == b },
-					'>=': function(a, b) { return a >= b },
-					'<=': function(a, b) { return a <= b },
-					'>': function(a, b) { return a > b },
-					'<': function(a, b) { return a < b }
-				};
-				
-				var expression = eval(validation.expression);
-				var operator = validation.expectedResult[0];
-				var expectedResult = parseInt(validation.expectedResult[1]);
-				
-				if(expressionCompare[operator](expression, expectedResult) == false){
-					failedValidaitons[key] = validation.errorMessage;
+
+		html += `<th>Action</th></tr>`;
+		if(data.events.length > 0){
+			data.events.forEach(ev => {
+				console.log(ev);
+				html += `<tr><td>${ev.eventDate}</td>`;
+				reportElements.forEach(e => {
+					const dv = ev.dataValues.find(d => d.dataElement === e.dataElement.id);
+					html += `<td>${dv ? dv.value : ""}</td>`;
+				});
+				var dischargeBtn = "";
+				var dv = ev.dataValues.find(d => d.dataElement === 'DsZjWisWVZn');
+				if(PROGRAM_STAGE != 'g0d1go4MmzA'){
+					if(!dv || !dv.value || dv.value == false){
+					dischargeBtn = `<button onclick="openEditModal('${ev.event}')">Discharge</button>`;
+					}else{
+					dischargeBtn = `<button disabled>Discharged</button>`;
+					}
 				}
+				html += `<td>${dischargeBtn} <a class="edit-button" href="fhp-edit.html?eventId=${ev.event}">Edit</a></td></tr>`;
 			});
+		}
 
-			if(Object.keys(failedValidaitons).length > 0){
-				var consolidatedMessage = '';
-				$.each(failedValidaitons, function(key, message){
-					consolidatedMessage += message + "\n";
-				})
-				alert(consolidatedMessage);
-			}else{
-				if(reportDate != "" && hf !== "" && hf !== null){
-					var completeJson = {
-						"completeDataSetRegistrations":[{
-							"dataSet":$("#dataset").val(),
-							"period":reportDate.substring(0, 4)+reportDate.substring(5, 7)+reportDate.substring(8, 10),
-							"organisationUnit":hf
-						}]
-					};
-					
-					// Send the POST request to the restservice
-					$.ajax({
-						type: "POST",
-						url: "/hmisrest/restservice.php?action=completeDataSetRegistrations",
-						data: JSON.stringify(completeJson),
-						dataType: "json",
-						beforeSend: function( xhr ) {
-							$("#loading").show();
-						},
-						success: function(data){
-							var msg = data.status;
-							if(msg == 'SUCCESS'){
-								msg = '<span style="color:green;font-wieght:bold">'+msg+'</span>';
-							}else if(msg == 'WARNING'){
-								msg = '<span style="color:orange;font-wieght:bold">'+msg+'</span>';
-							}
-							$("#statusmessage").html(msg);
-							$("#statusmessage").show();
-							$("#loading").hide();
-						}, failure: function(errMsg) {
-							alert(errMsg);
-							$("#statusmessage").html('<span style="color:red;font-wieght:bold">');
-							$("#statusmessage").show();
-							$("#loading").hide();
-						}
+		html += `</table>`;
+		document.getElementById("event-list").innerHTML = html;
+
+		// Hide add new button for one time information
+		if(PROGRAM_STAGE == 'g0d1go4MmzA'){
+			if(data.events.length != 0){
+				document.getElementById("addNew").style.display = "none";
+			}
+		}
+
+		// Check if hospital data is entered
+		if(PROGRAM_STAGE == 'f0C1TB9k2x6'){
+			const resTemp = await fetch(
+				`${DHIS2_BASE_URL}/api/events.json?programStage=g0d1go4MmzA&orgUnit=${ORG_UNIT}&paging=false&fields=event,eventDate,dataValues[dataElement,value]`,
+				{ headers: { Authorization: AUTH } }
+			);
+
+			const dataTemp = await resTemp.json();
+			if(dataTemp.events.length == 0){
+				document.getElementById("addNew").style.display = "none";
+				alert("Enter hospital information first");
+			}
+		}
+	}
+
+	async function openEditModal(eventId) {
+		selectedEvent = eventId;
+		const res = await fetch(`${DHIS2_BASE_URL}/api/events/${eventId}?fields=*`, {
+			headers: { Authorization: AUTH }
+		});
+		const event = await res.json();
+
+
+		const hiddenContainer = document.getElementById('hiddenDataValues');
+		hiddenContainer.innerHTML = '';
+
+		const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+		const metadata = await fetchMetadata(PROGRAM_STAGE);
+
+		// OptionSet IDs
+		const optionSetIds = metadata.programStageDataElements
+			.map(e => e.dataElement.optionSet?.id)
+			.filter(Boolean);
+		const optionSets = await fetchOptionSets(optionSetIds);
+
+		let html = "";
+
+		metadata.programStageDataElements.forEach(item => {
+			const de = item.dataElement;
+			const isEditable = de.id === "DsZjWisWVZn"||de.id === "oBhJ0aWNjmL"||de.id === "NE44z9pVewW";
+
+			const existing = event.dataValues.find(d => d.dataElement === de.id)||{};
+
+			if (isEditable){
+				const label = getLabel(de);
+				const id = `${de.id}_edit`;
+
+				//const existing = event.dataValues.find(d => d.dataElement === de.id);
+				html += `<div class="form-row">
+					<label>${label}</label>`;
+				if (de.optionSet) {
+					const options = optionSets[de.optionSet.id] || [];
+					let html = `<select id="${id}">
+						<option value="">Select</option>`;
+					options.forEach(opt => {
+						html += `<option value="${opt.code}" ${opt.code === existing.value ? "selected" : ""}>${opt.name}</option>`;
 					});
-				}else{
-					alert("Either report date or health facility is missing.");
+					html += `</select>`;
 				}
+
+				switch (de.valueType) {
+					case "TEXT":
+					case "LONG_TEXT":
+						html += `<input type="text" id="${id}" value="${existing ? existing.value : ""}">`;
+						break;
+					case "NUMBER":
+						html += `<input type="number" id="${id}" value="${existing ? existing.value : ""}">`;
+						break;
+					case "INTEGER":
+						html += `<input type="number" id="${id}" value="${existing ? existing.value : ""}">`;
+						break;
+					case "DATE":
+						html += `<input type="date" id="${id}" value="${existing ? existing.value : ""}">`;
+						break;
+					case "TRUE_ONLY":
+						html += `<input type="checkbox" id="${id}" ${existing.value ? "checked" : ""}>`;
+						break;
+					case "PHONE_NUMBER":
+						html += `<input type="tel" id="${id}" value="${existing ? existing.value : ""}">`;
+						break;
+					case "FILE_RESOURCE":
+						html += `<input type="file" id="${id}">`;
+						break;
+					default:
+						html += `<input type="text" id="${id}" value="${existing ? existing.value : ""}">`;
+				}
+				html += `</div>`;
+			}else{
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.id = `${de.id}_edit`;
+				input.value = existing.value || '';
+				hiddenContainer.appendChild(input);
 			}
 		});
+
+		document.getElementById("edit-form").innerHTML = html;
+		document.getElementById("modal").style.display = "block";
+	}
+
+	async function fetchOptionSets(ids) {
+		if (!ids.length) return {};
+		const url = `${DHIS2_BASE_URL}/api/optionSets?filter=id:in:[${ids.join(",")}]&fields=id,options[code,name]`;
+		const res = await fetch(url, {
+			headers: { "Authorization": AUTH }
+		});
+		const data = await res.json();
+		let map = {};
+		data.optionSets.forEach(os => {
+			map[os.id] = os.options;
+		});
+		return map;
+	}
+
+	async function uploadFile(file) {
+		const formData = new FormData();
+		formData.append("file", file);
+		const res = await fetch(`${DHIS2_BASE_URL}/api/fileResources`, {
+			method: "POST",
+			headers: { Authorization: AUTH },
+			body: formData
+		});
+		const result = await res.json();
+		if (!res.ok) throw new Error("Upload failed");
+		return result.response.fileResource.id;
+	}
+
+	async function submitUpdate() {
+		let ORG_UNIT = document.getElementById('orgUnit').value;
+		ORG_UNIT = await checkOuId(ORG_UNIT, document.getElementById('orgUnitName').value);
+		const PROGRAM = document.getElementById("reportType").value.split("-")[0];
+		const PROGRAM_STAGE = document.getElementById("reportType").value.split("-")[1];
+		const metadata = await fetchMetadata(PROGRAM_STAGE);
+		let dataValues = [];
+		var eventStatus = 'ACTIVE';
+
+		for (let item of metadata.programStageDataElements) {
+			const de = item.dataElement;
+			const el = document.getElementById(`${de.id}_edit`);
+			if (!el) continue;
+			let value = '';
+
+			if (el.type === "file" && el.files.length) {
+				const fileId = await uploadFile(el.files[0]);
+				dataValues.push({
+					dataElement: de.id,
+					value: fileId
+				});
+			}else if (el.type === "checkbox") {
+				if (el.checked){
+					value = 'true';
+					dataValues.push({
+						dataElement: de.id,
+						value: "true"
+					});
+
+					if(de.id === "DsZjWisWVZn"){
+						eventStatus = "COMPLETED";
+					}
+				}				
+			}else if (el.value) {
+				dataValues.push({
+					dataElement: de.id,
+					value: el.value
+				});
+			}
+		}
+
+		const payload = {
+			event: selectedEvent,
+			program: PROGRAM,
+			programStage: PROGRAM_STAGE,
+			orgUnit: ORG_UNIT,
+			status: eventStatus,
+			dataValues: dataValues
+		};
+
+		//console.log(payload);
+		const res = await fetch(`${DHIS2_BASE_URL}/api/events/${selectedEvent}`, {
+			method: "PUT",
+			headers: {
+				Authorization: AUTH,
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify(payload)
+		});
+
+		if (res.ok) {
+			alert("Updated successfully");
+			closeModal();
+			loadEvents();
+		} else {
+			alert("Update failed");
+		}
+	}
+
+	async function checkOuId(ouId,ouName){
+
+		let ouIdToReturn;
+		// Check OU by Id in additional instance
+		var url = `${DHIS2_BASE_URL}/api/organisationUnits/${ouId}?fields=id,name,level`;
+		const res = await fetch(url, {
+			headers: { "Authorization": AUTH }
+		});
+		const data = await res.json();
+
+		if(data.status === undefined){
+			console.log("OU ID Match");
+			ouIdToReturn = ouId;
+		}else{
+			// Check OU By Name
+			var url = `${DHIS2_BASE_URL}/api/organisationUnits?filter=name:like:${ouName}&paging=false`;
+			const res = await fetch(url, {
+				headers: { "Authorization": AUTH }
+			});
+			const data = await res.json();
+
+			if(data.organisationUnits != undefined){
+				console.log('OU name match');
+				ouIdToReturn = data.organisationUnits[0].id;
+			}	
+		}
+		return ouIdToReturn;
+	}
+
+	function closeModal() {
+		document.getElementById("modal").style.display = "none";
+	}
+
+	function attachFileListeners() {
+		const fileInputs = document.querySelectorAll('input[type="file"]');
+		fileInputs.forEach(input => {
+			input.addEventListener("change", async function() {
+				if (!this.files.length) return;
+				const file = this.files[0];
+				const dataElement = this.id.split("_")[0];
+				// UI feedback
+				this.disabled = true;
+				try {
+					const fileId = await uploadFileToDHIS2(file);
+					// Store fileResourceId
+					uploadedFiles[dataElement] = fileId;
+					// Optional UI feedback
+					this.style.border = "2px solid green";
+					this.title = "Uploaded";
+					console.log("Uploaded:", dataElement, fileId);
+				} catch (err) {
+					alert("File upload failed");
+					this.value = "";
+				}
+				this.disabled = false;
+			});
+		});
+	}
+
+	// Select organization unit
+	var selectedOrgUnit;
+	selection.setListenerFunction(function(e){
+		selectedOrgUnit = e;
+		var selectedOrgUnitName = document.getElementsByClassName("selected")[0].innerHTML;
+		document.getElementById('orgUnitName').value = selectedOrgUnitName;
+		document.getElementById('orgUnit').value = e[0];
+		loadEvents();
 	});
-	
-	
-	
-	function displayForm(pe, ouId, dataSet){
-		$("#form").show();
-		
-		var dhis2UrlParams = "loadForm.action?dataSetId="+dataSet;
-					
-		var formUrl = '/hmisrest/restservice.php?action=loadForm&dataset='+dataSet;
-		$.ajax({
-			type: "GET",
-			url: formUrl,
-			beforeSend: function( xhr ) {
-				$("#loading").show();
-			}, success: function(data){
-				$("#loading").hide();
-				$(".form").html(data);
-				getDataValues(pe,ouId,dataSet);
-				triggerNepaliCalendar();
-				$(".submitandmessage").show();
-				
-			}, failure: function(errMsg) {
-				alert(errMsg);
-				$("#statusmessage").html('<span style="color:red;font-wieght:bold">');
-				$("#statusmessage").show();
-				$(".submitandmessage").hide();
-				$("#loading").hide();
-			}
-		});
-	}
-	
-	function triggerNepaliCalendar(){
-		$("td.date input").calendarsPicker({
-			calendar: $.calendars.instance('nepali'),
-			yearRange: '-120:+0',
-			duration: "fast",
-			showAnim: "fadeIn",
-			dateFormat: 'yyyy-mm-dd',
-			onSelect: function(npDate) {
-				$(this).trigger("blur");
-			}
-		});
-	}
-	
-	function loadAvailableDataSets(ouId){
-		$("#dsmsg").html('Please wait...');
-		var url = '/hmisrest/restservice.php?ouDatasetAssignment='+ouId;
-		$.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			success: function(dataSetAssignment){
-				var url = '/hmisrest/restservice.php?action=dataSets';
-				$.ajax({
-					type: "GET",
-					url: url,
-					dataType: 'json',
-					success: function(data){
-						$("#dataset").empty();
-						$("#dataset").append('<option value="">Select data set</option>');
-						$.each(data.dataSets, function(i, ds ) {
-							if(dataSetAssignment.includes(ds.id)){
-								$("#dataset").append('<option value=' + ds.id + '>' + ds.displayName + '</option>');
-							}
-						});
-						$("#dsmsg").html('');
-					}, failure: function(errMsg) {
-						console.log(errMsg);
-					}
-				});
-			}
-		});
-	}
-	
-	function getDataValues(pe,ouId,dataSet){
-		$.ajax({
-			type: "GET",
-			url: "/hmisrest/restservice.php?reportDate="+pe+"&ouId="+ouId+"&dataSet="+dataSet,
-			dataType: "json",
-			success: function(data){
-				if(data.dataValues.length > 0){
-					$.each(data.dataValues, function(i, item){
-						var id = item.id+"-val";
-						var val = item.val;
-						$("#"+id).val(val);
-					});
-				}else{
-					$(".inputFields").val("");
-				}
-				if(data.complete == true){
-					alert('Data set already completed for this period.');
-					$("#statusmessage").show();
-					$("#statusmessage").html('Completed on '+data.date);
-				}
-			}, failure: function(errMsg) {
-				console.log(errMsg);
-			}
-		});	
-	}
-	
-	function getPeriod(){
-		var reportDate = $("#reportDate").val();
-		return reportDate.substring(0, 4)+reportDate.substring(5, 7)+reportDate.substring(8, 10);
-	}
-	
-	function getReport(ouid){
-		//console.log(ouid);
-		$.ajax({
-			type: "GET",
-			url: "/hmisrest/restservice.php?ouReport="+ouid,
-			dataType: "json",
-			success: function(data){
-				var renderers = $.extend($.pivotUtilities.renderers,$.pivotUtilities.c3_renderers);
-				var sum = $.pivotUtilities.aggregatorTemplates.sum;
-                var numberFormat = $.pivotUtilities.numberFormat;
-                var intFormat = numberFormat({digitsAfterDecimal: 0}); 
-				var tpl = $.pivotUtilities.aggregatorTemplates;
-				$("#report").pivotUI(data,{
-					renderers: renderers,
-					hiddenFromDragDrop: ["Value"],
-					cols: ["Period"],
-					rows: ["Data"],
-					aggregators: {
-						"Sum of Values": function() { return tpl.sum()(["Value"]) }
-					}
-					
-				},true);
-			}, failure: function(errMsg) {
-				console.log(errMsg);
-			}
-		});	
-	}
-	
-	function checkOuId(ouId,ouName){
-		// try to get the details from another instance firstChild
-		$("#dsmsg").html('Please wait...');
-		$.getJSON("/hmisrest/hmisAdditionalAdapter.php?action=getOuDetail&ouid="+ouId).done(ouDetail => {
-			if(ouDetail.status === undefined){
-				console.log('ouid match');
-				loadAvailableDataSets(ouId);
-				$("#dsmsg").html('');
-			}else{
-				console.log("Searching for matching ouid..." );
-				$.getJSON("/hmisrest/hmisAdditionalAdapter.php?action=getAllOu").done(ous => {
-					$.each(ous.organisationUnits, function(i, ou ) {
-						if(ou.name == ouName){
-							console.log('found: '+ou.id);
-							document.getElementById('orgUnit').value = ou.id;
-							loadAvailableDataSets(ou.id);
-							$("#dsmsg").html('');
-							return false;
-						}
-					});
-				});
-			}
-			
-		}).fail(function() {
-			
-		});
-	}
-}).fail(error => {
-	console.warn('Failed to get manifest:', error);
-});
+
+	// Organization Unit search
+	$("#searchField").autocomplete({
+		source: "/dhis-web-commons/ouwt/getOrganisationUnitsByName.action",
+		select: function(event,ui) {
+			$("#searchField").val(ui.item.value);
+			selection.findByName();
+		}
+	});
+
+	// Report type selector	
+	reportType.addEventListener('change', (event) => {
+		document.getElementById("event-list").innerHTML = "<img src='img/pulse.gif'/>";
+		document.getElementById("addNew").style.display = "block";
+		loadEvents();
+	});
+
+	const newEntryLink = document.querySelector('#addNew');
+	newEntryLink.addEventListener('click', (event) => {
+		event.preventDefault();
+		let href = newEntryLink.getAttribute('href');
+		const reportType = document.getElementById("reportType").value;
+		const basePath = window.location.origin + window.location.pathname.replace(/[^\/]+$/, '');
+		const url = `${basePath}fhp-add.html?program=${encodeURIComponent(reportType)}`;
+		window.location.href = url;
+	});
+
+	// Init
+	loadEvents();
+
+</script>
+<script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
+<script>
+	$(document).ready(function(){
+		if ($.fn.DataTable.isDataTable('dataTable')) {
+			$('#eventTable').DataTable().destroy();
+		}
+
+
+		$('#dataTable').DataTable();
+
+	})
