@@ -211,7 +211,7 @@ async function submitEvent() {
 				events: [{
 						program: program,
 						programStage: programStage,
-						orgUnit: selectedOrgUnit,
+						orgUnit: selectedOrgUnit[0],
 						eventDate: new Date().toISOString().split("T")[0],
 						status: eventStatus,
 						dataValues: dataValues
@@ -253,7 +253,7 @@ selection.setListenerFunction(function(e){
 	document.getElementById('orgUnitName').value = selectedOrgUnitName;
 	document.getElementById('orgUnit').value = e[0];
 	$("#orgUnit").trigger("change");
-		checkOuId(e[0],selectedOrgUnitName);
+		checkOuId(e[0], selectedOrgUnitName);
 });
 
 // Organization Unit search
@@ -278,10 +278,12 @@ async function checkOuId(ouId,ouName){
 				ouIdToReturn = ouId;
 		}else{
 			// Check OU By Name
+			console.log('OU not found, checking by name');
 			var url = `${DHIS2_BASE_URL}/api/organisationUnits?filter=name:like:${ouName}&paging=false`;
 			const res = await fetch(url, {
 				headers: { "Authorization": AUTH }
 			});
+			
 			const data = await res.json();
 				if(data.organisationUnits != undefined){
 						console.log('OU name match');

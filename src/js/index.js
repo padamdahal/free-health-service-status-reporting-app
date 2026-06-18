@@ -372,9 +372,6 @@
 	// Init
 	loadEvents();
 
-</script>
-<script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
-<script>
 	$(document).ready(function(){
 		if ($.fn.DataTable.isDataTable('dataTable')) {
 			$('#eventTable').DataTable().destroy();
