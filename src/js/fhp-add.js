@@ -211,7 +211,7 @@ async function submitEvent() {
 				events: [{
 						program: program,
 						programStage: programStage,
-						orgUnit: selectedOrgUnit[0],
+						orgUnit: selectedOrgUnit,
 						eventDate: new Date().toISOString().split("T")[0],
 						status: eventStatus,
 						dataValues: dataValues
@@ -265,20 +265,20 @@ $("#searchField").autocomplete({
 	}
 });
 
-async function checkOuId(ouId,ouName){
+async function checkOuId(ouId, ouName){
 		// try to get the details from another instance firstChild
-		let ouIdToReturn;
 		var url = `${DHIS2_BASE_URL}/api/organisationUnits/${ouId}?fields=id,name,level`;
 		const res = await fetch(url, {
 				headers: { "Authorization": AUTH }
 		});
+	
 		const data = await res.json();
 		if(data.status === undefined){
-				console.log("OU ID Match");
-				ouIdToReturn = ouId;
+				console.log("OU ID found in target system");
+				selectedOrgUnit = ouId;
 		}else{
 			// Check OU By Name
-			console.log('OU not found, checking by name');
+			console.log('OU ID not found, checking by name');
 			var url = `${DHIS2_BASE_URL}/api/organisationUnits?filter=name:like:${ouName}&paging=false`;
 			const res = await fetch(url, {
 				headers: { "Authorization": AUTH }
@@ -286,16 +286,14 @@ async function checkOuId(ouId,ouName){
 			
 			const data = await res.json();
 				if(data.organisationUnits != undefined){
-						console.log('OU name match');
-						console.log(data.organisationUnits[0].id);
-						ouIdToReturn = data.organisationUnits[0].id;
-						selectedOrgUnit = ouIdToReturn;
+						console.log('OU found by name');
+						selectedOrgUnit = data.organisationUnits[0].id;
 				}else{
-						alert("Hospital doesn't exists in target system.")
+						alert("OU doesn't exists in target system.")
 						selectedOrgUnit = null;
 				}
 		}
-		console.log("Remote orgUnitId = "+ouIdToReturn);
+		console.log("Remote orgUnitId = "+selectedOrgUnit);
 
 }
 
